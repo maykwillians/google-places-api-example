@@ -10,10 +10,10 @@ interface PlacesService {
     @POST("place/nearbysearch/json")
     @FormUrlEncoded
     fun fetchPlaces(
-        @Field("location") location: String,
-        @Field("radius") radius: String,
-        @Field("type") type: String,
-        @Field("keyword") keyword: String,
-        @Field("key") key: String
+            @Field("location") location: String,
+            @Field("radius") radius: String,
+            @Field("type") type: String,
+            @Field("keyword") keyword: String,
+            @Field("key") key: String
     ): Single<PlacesVO>
 }

@@ -6,21 +6,29 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.maykmenezes.googleplacesapiexample.R
-
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
+import com.maykmenezes.googleplacesapiexample.di.PlacesModule.placesModule
+import com.maykmenezes.googleplacesapiexample.model.PlacesVO
+import org.koin.android.ext.android.inject
+import org.koin.core.context.loadKoinModules
+import org.koin.core.context.unloadKoinModules
+import org.koin.core.parameter.parametersOf
 
 class ListPlacesFragment : Fragment(), ListPlacesContract.View {
 
-    private var param1: String? = null
-    private var param2: String? = null
+    private val presenter by inject<ListPlacesContract.Presenter> {
+        parametersOf(this)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
+        loadKoinModules(placesModule)
+
+        presenter.fetchPlaces(
+            location = "-33.8670522,151.1957362",
+            radius = "1500",
+            type = "restaurant",
+            keyword = "cruise",
+            key = "")
     }
 
     override fun onCreateView(
@@ -30,14 +38,27 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View {
         return inflater.inflate(R.layout.fragment_list_places, container, false)
     }
 
-    companion object {
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            ListPlacesFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
-                }
-            }
+    override fun onDetach() {
+        presenter.detachView()
+        unloadKoinModules(placesModule)
+        super.onDetach()
+    }
+
+    override fun showLoading() {
+
+    }
+
+    override fun hideLoading() {
+
+    }
+
+    override fun showError(e: Throwable) {
+
+    }
+
+    override fun showPlaces(places: PlacesVO) {
+        for(place in places.results!!) {
+            println("PLACE: " + place?.geometry?.location?.lat)
+        }
     }
 }

@@ -10,7 +10,7 @@ import com.maykmenezes.googleplacesapiexample.R
 private const val ARG_PARAM1 = "param1"
 private const val ARG_PARAM2 = "param2"
 
-class ListPlacesFragment : Fragment() {
+class ListPlacesFragment : Fragment(), PlacesContract.View {
 
     private var param1: String? = null
     private var param2: String? = null

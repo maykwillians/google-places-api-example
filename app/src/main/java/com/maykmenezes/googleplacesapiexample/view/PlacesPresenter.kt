@@ -1,5 +1,10 @@
 package com.maykmenezes.googleplacesapiexample.view
 
-class PlacesPresenter: PlacesContract.Presenter {
+import com.maykmenezes.googleplacesapiexample.repository.PlacesRepository
+
+class PlacesPresenter(
+    private var view: PlacesContract.View?,
+    private val repository: PlacesRepository
+): PlacesContract.Presenter {
 
 }

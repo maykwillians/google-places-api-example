@@ -1,7 +1,8 @@
-package com.maykmenezes.googleplacesapiexample
+package com.maykmenezes.googleplacesapiexample.view
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import com.maykmenezes.googleplacesapiexample.R
 
 class PlacesActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

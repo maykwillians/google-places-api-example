@@ -15,7 +15,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.GooglePlacesApiExample"
         tools:ignore="AllowBackup">
-        <activity android:name=".PlacesActivity"
+        <activity android:name=".view.PlacesActivity"
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

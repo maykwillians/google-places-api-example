@@ -1,4 +1,4 @@
-package com.maykmenezes.googleplacesapiexample.view
+package com.maykmenezes.googleplacesapiexample.view.details_place
 
 import android.os.Bundle
 import androidx.fragment.app.Fragment

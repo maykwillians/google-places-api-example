@@ -1,4 +1,4 @@
-package com.maykmenezes.googleplacesapiexample.view
+package com.maykmenezes.googleplacesapiexample.view.list_places
 
 import android.os.Bundle
 import androidx.fragment.app.Fragment
@@ -10,7 +10,7 @@ import com.maykmenezes.googleplacesapiexample.R
 private const val ARG_PARAM1 = "param1"
 private const val ARG_PARAM2 = "param2"
 
-class ListPlacesFragment : Fragment(), PlacesContract.View {
+class ListPlacesFragment : Fragment(), ListPlacesContract.View {
 
     private var param1: String? = null
     private var param2: String? = null

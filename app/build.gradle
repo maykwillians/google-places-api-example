@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.application'
     id 'kotlin-android'
+    id 'kotlin-android-extensions'
 }
 
 android {
@@ -39,7 +40,32 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation 'com.google.android.material:material:1.2.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
-    testImplementation 'junit:junit:4.+'
+
+    /*Retrofit*/
+    implementation 'com.squareup.retrofit2:retrofit:2.7.2'
+    implementation 'com.squareup.retrofit2:converter-gson:2.7.2'
+    implementation 'com.squareup.retrofit2:adapter-rxjava2:2.7.2'
+
+    /*OkHttp*/
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.4.0'
+
+    /*RxJava and RxAndroid*/
+    implementation 'io.reactivex.rxjava2:rxjava:2.2.9'
+    implementation 'io.reactivex.rxjava2:rxandroid:2.1.0'
+
+    /*Koin*/
+    implementation 'org.koin:koin-android:2.1.6'
+    implementation 'org.koin:koin-androidx-viewmodel:2.1.6'
+
+    /*Maps, Places and Location*/
+    implementation 'com.google.android.gms:play-services-maps:17.0.0'
+    implementation 'com.google.android.gms:play-services-location:17.1.0'
+    implementation 'com.google.android.libraries.places:places:2.4.0'
+
+    /*Test*/
+    testImplementation 'junit:junit:4.13.1'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+    testImplementation 'androidx.arch.core:core-testing:2.1.0'
+    testImplementation 'io.mockk:mockk:1.10.2'
 }

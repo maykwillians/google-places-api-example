@@ -3,10 +3,13 @@ package com.maykmenezes.googleplacesapiexample.view.list_places
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.Context
 import android.content.Context.LOCATION_SERVICE
 import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
@@ -15,6 +18,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.checkSelfPermission
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
@@ -22,6 +26,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapsInitializer
 import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
@@ -29,6 +34,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.maykmenezes.googleplacesapiexample.R
 import com.maykmenezes.googleplacesapiexample.di.PlacesModule.placesModule
 import com.maykmenezes.googleplacesapiexample.model.PlacesVO
+import com.maykmenezes.googleplacesapiexample.model.ResultsItem
 import kotlinx.android.synthetic.main.fragment_list_places.*
 import org.koin.android.ext.android.inject
 import org.koin.core.context.loadKoinModules
@@ -170,6 +176,18 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
 
     }
 
+    private fun  bitmapDescriptorFromVector(context: Context, vectorResId:Int): BitmapDescriptor? {
+        val vectorDrawable = ContextCompat.getDrawable(context, vectorResId)
+        vectorDrawable?.let {
+            vectorDrawable.setBounds(0, 0, vectorDrawable.intrinsicWidth, vectorDrawable.intrinsicHeight)
+            val bitmap = Bitmap.createBitmap(vectorDrawable.intrinsicWidth, vectorDrawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
+            val canvas =  Canvas(bitmap)
+            vectorDrawable.draw(canvas)
+            return BitmapDescriptorFactory.fromBitmap(bitmap)
+        }
+        return null
+    }
+
     override fun showPlaces(places: PlacesVO) {
 
 //        showPlacesList(places)
@@ -180,8 +198,18 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
                         .position(LatLng(
                                 place?.geometry?.location?.lat!!,
                                 place.geometry.location.lng!!))
-                        .title(place.name))
+                        .title(place.name)
+                        .icon(bitmapDescriptorFromVector(requireActivity(), setPlaceIcon(place))))
             }
+        }
+    }
+
+    private fun setPlaceIcon(place: ResultsItem): Int {
+        return when(place.types?.first()) {
+            "restaurant" -> R.drawable.ic_restaurant_pin
+            "bar" -> R.drawable.ic_bar_pin
+            "cafe" -> R.drawable.ic_cafe_pin
+            else -> R.drawable.ic_undefined_place_pin
         }
     }
 
@@ -192,7 +220,8 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
 
             it.addMarker(MarkerOptions()
                     .position(position)
-                    .title("My Location"))
+                    .title("Me")
+                    .icon(bitmapDescriptorFromVector(requireActivity(), R.drawable.ic_my_location_pin)))
 
             val yourLocation = CameraUpdateFactory.newLatLngZoom(position, MAP_ZOOM)
             it.moveCamera(yourLocation)

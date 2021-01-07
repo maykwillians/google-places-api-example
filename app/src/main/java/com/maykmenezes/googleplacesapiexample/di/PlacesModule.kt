@@ -6,6 +6,8 @@ import com.maykmenezes.googleplacesapiexample.service.PlacesService
 import com.maykmenezes.googleplacesapiexample.service.ServiceConfig.retrofit
 import com.maykmenezes.googleplacesapiexample.view.list_places.ListPlacesContract
 import com.maykmenezes.googleplacesapiexample.view.list_places.ListPlacesPresenter
+import com.maykmenezes.googleplacesapiexample.view.list_places.LocationProvider
+import com.maykmenezes.googleplacesapiexample.view.list_places.LocationProviderImpl
 import org.koin.dsl.module
 
 object PlacesModule {
@@ -16,8 +18,14 @@ object PlacesModule {
         factory<PlacesRepository> {
             PlacesRepositoryImpl(service = get())
         }
+        factory<LocationProvider> {
+            LocationProviderImpl()
+        }
         factory<ListPlacesContract.Presenter> { (view: ListPlacesContract.View) ->
-            ListPlacesPresenter(view = view, repository = get())
+            ListPlacesPresenter(
+                    view = view,
+                    repository = get(),
+                    locationProvider = get())
         }
     }
 }

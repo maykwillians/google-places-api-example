@@ -1,5 +1,8 @@
 package com.maykmenezes.googleplacesapiexample.view.list_places
 
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.maps.model.LatLng
 import com.maykmenezes.googleplacesapiexample.model.PlacesVO
 
 interface ListPlacesContract {
@@ -9,15 +12,14 @@ interface ListPlacesContract {
         fun hideLoading()
         fun showError(e: Throwable)
         fun showPlaces(places: PlacesVO)
+        fun showInitialMap(position: LatLng)
+        fun stopLocationCallback()
     }
 
     interface Presenter {
-        fun fetchPlaces(
-                location: String,
-                radius: String,
-                type: String,
-                keyword: String,
-                key: String)
         fun detachView()
+        fun getLocationRequest(): LocationRequest
+        fun createLocationCallback()
+        fun getLocationCallback(): LocationCallback
     }
 }

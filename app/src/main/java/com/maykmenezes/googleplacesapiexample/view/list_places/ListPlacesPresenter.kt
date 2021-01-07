@@ -10,6 +10,12 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 
+private const val PLACES_FIND_RADIUS = "3000"
+private const val PLACE_RESTAURANT_TYPE = "restaurant"
+private const val PLACE_CAFE_TYPE = "bar"
+private const val PLACE_BAR_TYPE = "cafe"
+private const val API_KEY = ""
+
 class ListPlacesPresenter(
         private var view: ListPlacesContract.View?,
         private val repository: PlacesRepository,
@@ -18,8 +24,33 @@ class ListPlacesPresenter(
 
     private lateinit var locationCallback: LocationCallback
 
-    private fun fetchPlaces(location: String, radius: String, type: String, keyword: String, key: String) {
-        repository.fetchPlaces(location, radius, type, keyword, key)
+    override fun getLocationRequest() = locationProvider.getLocationRequest()
+
+    override fun createLocationCallback() {
+        locationCallback = object : LocationCallback() {
+            override fun onLocationResult(locationResult: LocationResult) {
+                view?.stopLocationCallback()
+                for (location in locationResult.locations) {
+                    val myLocation = "${location.latitude},${location.longitude}"
+                    view?.showInitialMap(LatLng(location.latitude, location.longitude))
+
+                    fetchPlace(myLocation, PLACE_RESTAURANT_TYPE)
+                    fetchPlace(myLocation, PLACE_CAFE_TYPE)
+                    fetchPlace(myLocation, PLACE_BAR_TYPE)
+                }
+            }
+        }
+    }
+
+    private fun fetchPlace(location: String, type: String) {
+        fetchPlaces(
+                location = location,
+                type = type,
+                key = API_KEY)
+    }
+
+    private fun fetchPlaces(location: String, type: String, key: String) {
+        repository.fetchPlaces(location, PLACES_FIND_RADIUS, type, key)
                 .subscribeOn(Schedulers.io())
                 .doAfterTerminate { view?.hideLoading() }
                 .observeOn(AndroidSchedulers.mainThread())
@@ -34,29 +65,6 @@ class ListPlacesPresenter(
                         view?.showError(throwable)
                     }
                 })
-    }
-
-    override fun getLocationRequest() = locationProvider.getLocationRequest()
-
-    override fun createLocationCallback() {
-        locationCallback = object : LocationCallback() {
-            override fun onLocationResult(locationResult: LocationResult) {
-
-                view?.stopLocationCallback()
-
-                for (location in locationResult.locations) {
-
-                    view?.showInitialMap(LatLng(location.latitude, location.longitude))
-
-                    fetchPlaces(
-                            location = "${location.latitude},${location.longitude}",
-                            radius = "1500",
-                            type = "restaurant",
-                            keyword = "cruise",
-                            key = "")
-                }
-            }
-        }
     }
 
     override fun getLocationCallback(): LocationCallback = locationCallback

@@ -7,11 +7,9 @@ class PlacesRepositoryImpl(private val service: PlacesService): PlacesRepository
         location: String,
         radius: String,
         type: String,
-        keyword: String,
         key: String) = service.fetchPlaces(
         location,
         radius,
         type,
-        keyword,
         key)
 }

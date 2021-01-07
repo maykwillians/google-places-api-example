@@ -8,7 +8,6 @@ interface PlacesRepository {
         location: String,
         radius: String,
         type: String,
-        keyword: String,
         key: String
     ): Single<PlacesVO>
 }

@@ -22,6 +22,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapsInitializer
 import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -34,15 +35,14 @@ import org.koin.core.context.loadKoinModules
 import org.koin.core.context.unloadKoinModules
 import org.koin.core.parameter.parametersOf
 
+private const val GPS_ACTIVATION_PERMISSION_ID = 200
+private const val LOCALIZATION_PERMISSION_ID = 201
+private const val MAP_ZOOM = 15f
+
 class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallback {
 
     private lateinit var bottomSheetDialogPlaceDetails: BottomSheetDialog
-
-    private val REQUEST_CHECK_SETTINGS = 1
-    private val PERMISSION_ID = 2
-
     private lateinit var fusedLocationClient: FusedLocationProviderClient
-
     private lateinit var map: GoogleMap
 
     private val presenter by inject<ListPlacesContract.Presenter> {
@@ -62,7 +62,7 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         configMap()
-        showActivationGpsDialog()
+        requestGpsActivation()
     }
 
     private fun configMap() {
@@ -71,7 +71,7 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
         mapView.getMapAsync(this)
     }
 
-    private fun showActivationGpsDialog() {
+    private fun requestGpsActivation() {
         val locationSettingsRequest = LocationSettingsRequest.Builder()
                 .addLocationRequest(presenter.getLocationRequest())
                 .build()
@@ -79,7 +79,7 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
         val task = client.checkLocationSettings(locationSettingsRequest)
 
         task.addOnSuccessListener {
-            if(hasLocalizationPermissionAccess()) {
+            if(haveLocalizationPermissionAccess()) {
                 createLocationCallback()
             } else {
                 requestLocalizationPermission()
@@ -90,7 +90,7 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
             if (e is ResolvableApiException) {
                 try {
                     startIntentSenderForResult(e.resolution.intentSender,
-                            REQUEST_CHECK_SETTINGS,
+                            GPS_ACTIVATION_PERMISSION_ID,
                             null,
                             0,
                             0,
@@ -112,36 +112,36 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if(requestCode == REQUEST_CHECK_SETTINGS) {
+        if(requestCode == GPS_ACTIVATION_PERMISSION_ID) {
             when (resultCode) {
                 Activity.RESULT_OK -> {
-                    if(hasLocalizationPermissionAccess()) {
+                    if(haveLocalizationPermissionAccess()) {
                         createLocationCallback()
                     } else {
                         requestLocalizationPermission()
                     }
                 }
 
-                Activity.RESULT_CANCELED -> showActivationGpsDialog()
+                Activity.RESULT_CANCELED -> requestGpsActivation()
             }
         }
     }
 
-    private fun hasLocalizationPermissionAccess() = checkSelfPermission(requireActivity(),
+    private fun haveLocalizationPermissionAccess() = checkSelfPermission(requireActivity(),
             Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
 
     private fun requestLocalizationPermission() {
-        requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), PERMISSION_ID)
+        requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), LOCALIZATION_PERMISSION_ID)
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
-        if (requestCode == PERMISSION_ID) {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+        if (requestCode == LOCALIZATION_PERMISSION_ID) {
+            if (grantResults.isNotEmpty() && grantResults.first() == PackageManager.PERMISSION_GRANTED) {
                 createLocationCallback()
             } else {
-                if(isNeverAnkAgainLocalizationPermission()) {
+                if(notAskAgain()) {
                     // TODO impeditivo total, só pode utilizar depois que aceitar manualmente
                     requireActivity().finish()
                 } else {
@@ -151,7 +151,7 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
         }
     }
 
-    private fun isNeverAnkAgainLocalizationPermission() =
+    private fun notAskAgain() =
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 !shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)
             } else {
@@ -172,20 +172,15 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
 
     override fun showPlaces(places: PlacesVO) {
 
-        showPlacesList(places)
-
-        val locations = mutableListOf<LatLng>()
-
-        for(place in places.results!!) {
-            println("PLACE: " + place?.geometry?.location?.lat)
-            locations.add(LatLng(
-                    place?.geometry?.location?.lat!!,
-                    place.geometry.location.lng!!))
-        }
+//        showPlacesList(places)
 
         map.let {
-            for(loc in locations) {
-                it.addMarker(MarkerOptions().position(loc).title("Restaurants Locations"))
+            for(place in places.results!!) {
+                it.addMarker(MarkerOptions()
+                        .position(LatLng(
+                                place?.geometry?.location?.lat!!,
+                                place.geometry.location.lng!!))
+                        .title(place.name))
             }
         }
     }
@@ -195,9 +190,11 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
             map.clear()
             it.clear()
 
-            it.addMarker(MarkerOptions().position(position).title("My Location"))
+            it.addMarker(MarkerOptions()
+                    .position(position)
+                    .title("My Location"))
 
-            val yourLocation = CameraUpdateFactory.newLatLngZoom(position, 11.5f)
+            val yourLocation = CameraUpdateFactory.newLatLngZoom(position, MAP_ZOOM)
             it.moveCamera(yourLocation)
         }
     }
@@ -207,24 +204,19 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
     }
 
     private fun showPlacesList(places: PlacesVO) {
-        val b = LayoutInflater.from(requireActivity()).inflate(R.layout.list_places_layout, null)
+        val layout = LayoutInflater.from(requireActivity()).inflate(R.layout.list_places_layout, null)
 
-        val tv = b.findViewById<TextView>(R.id.myText)
+        val tv = layout.findViewById<TextView>(R.id.myText)
         tv.text = places.status
 
         this.bottomSheetDialogPlaceDetails = BottomSheetDialog(requireActivity())
-        this.bottomSheetDialogPlaceDetails.setContentView(b)
-
+        this.bottomSheetDialogPlaceDetails.setContentView(layout)
         this.bottomSheetDialogPlaceDetails.show()
     }
 
-    override fun onMapReady(googleMap: GoogleMap?) {
+    override fun onMapReady(googleMap: GoogleMap) {
         MapsInitializer.initialize(requireActivity())
-        this.map = googleMap!!
-    }
-
-    private fun stopLocationUpdates() {
-        fusedLocationClient.removeLocationUpdates(presenter.getLocationCallback())
+        this.map = googleMap
     }
 
     private fun isGPSEnabled(): Boolean {
@@ -235,7 +227,6 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
     }
 
     override fun onDetach() {
-        stopLocationUpdates()
         presenter.detachView()
         unloadKoinModules(placesModule)
         super.onDetach()

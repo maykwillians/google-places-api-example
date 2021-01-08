@@ -3,14 +3,13 @@ package com.maykmenezes.googleplacesapiexample.view.list_places
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Context
-import android.content.Context.LOCATION_SERVICE
 import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -24,12 +23,17 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.gms.common.api.ResolvableApiException
-import com.google.android.gms.location.*
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.LocationSettingsRequest
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapsInitializer
 import com.google.android.gms.maps.OnMapReadyCallback
-import com.google.android.gms.maps.model.*
+import com.google.android.gms.maps.model.BitmapDescriptor
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.maykmenezes.googleplacesapiexample.R
 import com.maykmenezes.googleplacesapiexample.di.PlacesModule.placesModule
@@ -132,7 +136,7 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
         if(requestCode == GPS_ACTIVATION_PERMISSION_ID) {
             when (resultCode) {
                 Activity.RESULT_OK -> {
-                    if(haveLocalizationPermissionAccess()) {
+                    if (haveLocalizationPermissionAccess()) {
                         createLocationCallback()
                     } else {
                         requestLocalizationPermission()
@@ -159,13 +163,22 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
                 createLocationCallback()
             } else {
                 if(notAskAgain()) {
-                    // TODO impeditivo total, só pode utilizar depois que aceitar manualmente
-                    requireActivity().finish()
+                    dialog()
                 } else {
                     requestLocalizationPermission()
                 }
             }
         }
+    }
+
+    private fun dialog() {
+        AlertDialog.Builder(requireActivity())
+                .setTitle(R.string.permission_denied)
+                .setCancelable(false)
+                .setMessage(R.string.permission_denied_message)
+                .setPositiveButton(R.string.ok) { _, _ ->
+                    requireActivity().finish()
+                }.show()
     }
 
     private fun notAskAgain() =
@@ -190,7 +203,7 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
         cl_error.visibility = VISIBLE
     }
 
-    private fun  bitmapDescriptorFromVector(context: Context, vectorResId:Int): BitmapDescriptor? {
+    private fun  bitmapDescriptorFromVector(context: Context, vectorResId: Int): BitmapDescriptor? {
         val vectorDrawable = ContextCompat.getDrawable(context, vectorResId)
         vectorDrawable?.let {
             vectorDrawable.setBounds(0, 0, vectorDrawable.intrinsicWidth, vectorDrawable.intrinsicHeight)
@@ -294,13 +307,6 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
             }
             true
         }
-    }
-
-    private fun isGPSEnabled(): Boolean {
-        val locationManager = requireActivity().getSystemService(LOCATION_SERVICE) as LocationManager
-        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager.isProviderEnabled(
-                LocationManager.NETWORK_PROVIDER
-        )
     }
 
     override fun onDetach() {

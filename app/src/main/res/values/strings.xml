@@ -2,4 +2,7 @@
     <string name="app_name">Places</string>
     <string name="error">An error has occurred. Check your internet connection or retry again</string>
     <string name="retry">RETRY</string>
+    <string name="permission_denied">Permission denied</string>
+    <string name="permission_denied_message">You will have to accept the permissions manually in your settings.</string>
+    <string name="ok">OK</string>
 </resources>

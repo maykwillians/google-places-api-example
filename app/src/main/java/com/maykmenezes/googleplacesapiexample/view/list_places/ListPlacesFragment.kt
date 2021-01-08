@@ -13,23 +13,21 @@ import android.graphics.Canvas
 import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.checkSelfPermission
+import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapsInitializer
 import com.google.android.gms.maps.OnMapReadyCallback
-import com.google.android.gms.maps.model.BitmapDescriptor
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.*
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.maykmenezes.googleplacesapiexample.R
 import com.maykmenezes.googleplacesapiexample.di.PlacesModule.placesModule
@@ -50,6 +48,8 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
     private lateinit var bottomSheetDialogPlaceDetails: BottomSheetDialog
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var map: GoogleMap
+    private var placesList = mutableListOf<ResultsItem>()
+    private lateinit var rvPlaceList: RecyclerView
 
     private val presenter by inject<ListPlacesContract.Presenter> {
         parametersOf(this)
@@ -190,13 +190,13 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
 
     override fun showPlaces(places: PlacesVO) {
 
-//        showPlacesList(places)
+        showPlacesList(places)
 
         map.let {
-            for(place in places.results!!) {
+            for(place in places.results) {
                 it.addMarker(MarkerOptions()
                         .position(LatLng(
-                                place?.geometry?.location?.lat!!,
+                                place.geometry?.location?.lat!!,
                                 place.geometry.location.lng!!))
                         .title(place.name)
                         .icon(bitmapDescriptorFromVector(requireActivity(), setPlaceIcon(place))))
@@ -226,26 +226,46 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
             val yourLocation = CameraUpdateFactory.newLatLngZoom(position, MAP_ZOOM)
             it.moveCamera(yourLocation)
         }
+
+        setupBottomSheetDialog()
     }
 
     override fun stopLocationCallback() {
         fusedLocationClient.removeLocationUpdates(presenter.getLocationCallback())
     }
 
-    private fun showPlacesList(places: PlacesVO) {
+    private fun setupBottomSheetDialog() {
         val layout = LayoutInflater.from(requireActivity()).inflate(R.layout.list_places_layout, null)
 
-        val tv = layout.findViewById<TextView>(R.id.myText)
-        tv.text = places.status
+        rvPlaceList = layout.findViewById(R.id.rv_places_list)
 
-        this.bottomSheetDialogPlaceDetails = BottomSheetDialog(requireActivity())
-        this.bottomSheetDialogPlaceDetails.setContentView(layout)
-        this.bottomSheetDialogPlaceDetails.show()
+        rvPlaceList.also {
+            it.layoutManager = LinearLayoutManager(requireActivity(), LinearLayoutManager.VERTICAL, false)
+        }
+
+        bottomSheetDialogPlaceDetails = BottomSheetDialog(requireActivity())
+        bottomSheetDialogPlaceDetails.setContentView(layout)
+    }
+
+    private fun showPlacesList(places: PlacesVO) {
+
+        for(place in places.results) {
+            placesList.add(place)
+            println("HGVJBH: " + placesList.count())
+        }
+
+        rvPlaceList.adapter = ListPlacesAdapter(placesList) {
+
+        }
+
+        if(!bottomSheetDialogPlaceDetails.isShowing) {
+            bottomSheetDialogPlaceDetails.show()
+        }
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
         MapsInitializer.initialize(requireActivity())
-        this.map = googleMap
+        map = googleMap
     }
 
     private fun isGPSEnabled(): Boolean {

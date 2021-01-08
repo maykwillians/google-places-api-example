@@ -32,7 +32,7 @@ class ListPlacesPresenter(
                 view?.stopLocationCallback()
                 for (location in locationResult.locations) {
                     val myLocation = "${location.latitude},${location.longitude}"
-                    view?.showInitialMap(LatLng(location.latitude, location.longitude))
+                    view?.showMeMapPosition(LatLng(location.latitude, location.longitude))
 
                     fetchPlace(myLocation, PLACE_RESTAURANT_TYPE)
                     fetchPlace(myLocation, PLACE_CAFE_TYPE)

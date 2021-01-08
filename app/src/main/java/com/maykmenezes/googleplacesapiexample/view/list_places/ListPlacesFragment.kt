@@ -10,7 +10,6 @@ import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -52,7 +51,7 @@ private const val MAP_PLACE_ZOOM = 18f
 
 class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallback {
 
-    private lateinit var bottomSheetDialogPlaceDetails: BottomSheetDialog
+    private lateinit var placesListLayout: BottomSheetDialog
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var map: GoogleMap
     private var placesList = mutableListOf<ResultsItem>()
@@ -74,10 +73,12 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        configMap()
+        setListeners()
+        setupMap()
         requestGpsActivation()
+    }
 
+    private fun setListeners() {
         iv_close.setOnClickListener {
             requireActivity().finish()
         }
@@ -86,7 +87,7 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
         }
     }
 
-    private fun configMap() {
+    private fun setupMap() {
         mapView.onCreate(null)
         mapView.onResume()
         mapView.getMapAsync(this)
@@ -112,14 +113,8 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
                 try {
                     startIntentSenderForResult(e.resolution.intentSender,
                             GPS_ACTIVATION_PERMISSION_ID,
-                            null,
-                            0,
-                            0,
-                            0,
-                            null)
-                } catch (ignored: IntentSender.SendIntentException) {
-
-                }
+                            null, 0, 0, 0, null)
+                } catch (ignored: IntentSender.SendIntentException) {}
             }
         }
     }
@@ -163,7 +158,7 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
                 createLocationCallback()
             } else {
                 if(notAskAgain()) {
-                    dialog()
+                    showDialogPermissionDenied()
                 } else {
                     requestLocalizationPermission()
                 }
@@ -171,7 +166,7 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
         }
     }
 
-    private fun dialog() {
+    private fun showDialogPermissionDenied() {
         AlertDialog.Builder(requireActivity())
                 .setTitle(R.string.permission_denied)
                 .setCancelable(false)
@@ -181,12 +176,7 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
                 }.show()
     }
 
-    private fun notAskAgain() =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                !shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)
-            } else {
-                TODO("VERSION.SDK_INT < M")
-            }
+    private fun notAskAgain() = !shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)
 
     override fun showLoading() {
         mapView.visibility = GONE
@@ -220,7 +210,7 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
         cl_error.visibility = GONE
         mapView.visibility = VISIBLE
 
-        showPlacesList(places)
+        showPlacesListLayout(places)
 
         map.also {
             for(place in places.results) {
@@ -243,49 +233,44 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
         }
     }
 
-    override fun showInitialMap(position: LatLng) {
+    override fun showMeMapPosition(position: LatLng) {
         map.also {
             map.clear()
             it.clear()
-
             it.addMarker(MarkerOptions()
                     .position(position)
                     .title("Me")
                     .icon(bitmapDescriptorFromVector(requireActivity(), R.drawable.ic_my_location_pin)))
-
             val yourLocation = CameraUpdateFactory.newLatLngZoom(position, MAP_ZOOM)
             it.moveCamera(yourLocation)
         }
 
-        setupBottomSheetDialog()
+        setupPlacesListLayout()
     }
 
     override fun stopLocationCallback() {
         fusedLocationClient.removeLocationUpdates(presenter.getLocationCallback())
     }
 
-    private fun setupBottomSheetDialog() {
+    private fun setupPlacesListLayout() {
         val layout = LayoutInflater.from(requireActivity()).inflate(R.layout.list_places_layout, null)
 
         rvPlaceList = layout.findViewById(R.id.rv_places_list)
-
         rvPlaceList.also {
             it.layoutManager = LinearLayoutManager(requireActivity(), LinearLayoutManager.VERTICAL, false)
         }
 
-        bottomSheetDialogPlaceDetails = BottomSheetDialog(requireActivity())
-        bottomSheetDialogPlaceDetails.setContentView(layout)
+        placesListLayout = BottomSheetDialog(requireActivity())
+        placesListLayout.setContentView(layout)
     }
 
-    private fun showPlacesList(places: PlacesVO) {
+    private fun showPlacesListLayout(places: PlacesVO) {
         for(place in places.results) {
             placesList.add(place)
         }
 
         rvPlaceList.adapter = ListPlacesAdapter(placesList) { place ->
-
-            bottomSheetDialogPlaceDetails.dismiss()
-
+            placesListLayout.dismiss()
             place.geometry?.let { geometry ->
                 val location = LatLng(geometry.location?.lat!!, geometry.location.lng!!)
                 val position = CameraUpdateFactory.newLatLngZoom(location, MAP_PLACE_ZOOM)
@@ -293,8 +278,8 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
             }
         }
 
-        if(!bottomSheetDialogPlaceDetails.isShowing) {
-            bottomSheetDialogPlaceDetails.show()
+        if(!placesListLayout.isShowing) {
+            placesListLayout.show()
         }
     }
 
@@ -302,8 +287,8 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
         MapsInitializer.initialize(requireActivity())
         map = googleMap
         map.setOnMarkerClickListener {
-            if (!bottomSheetDialogPlaceDetails.isShowing) {
-                bottomSheetDialogPlaceDetails.show()
+            if (!placesListLayout.isShowing) {
+                placesListLayout.show()
             }
             true
         }

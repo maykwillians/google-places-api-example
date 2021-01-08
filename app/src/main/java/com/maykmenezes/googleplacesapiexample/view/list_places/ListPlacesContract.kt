@@ -12,7 +12,7 @@ interface ListPlacesContract {
         fun hideLoading()
         fun showError(e: Throwable)
         fun showPlaces(places: PlacesVO)
-        fun showInitialMap(position: LatLng)
+        fun showMeMapPosition(position: LatLng)
         fun stopLocationCallback()
     }
 

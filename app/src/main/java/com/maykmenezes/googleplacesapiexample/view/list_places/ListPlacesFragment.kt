@@ -42,6 +42,7 @@ import org.koin.core.parameter.parametersOf
 private const val GPS_ACTIVATION_PERMISSION_ID = 200
 private const val LOCALIZATION_PERMISSION_ID = 201
 private const val MAP_ZOOM = 15f
+private const val MAP_PLACE_ZOOM = 18f
 
 class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallback {
 
@@ -192,7 +193,7 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
 
         showPlacesList(places)
 
-        map.let {
+        map.also {
             for(place in places.results) {
                 it.addMarker(MarkerOptions()
                         .position(LatLng(
@@ -214,7 +215,7 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
     }
 
     override fun showInitialMap(position: LatLng) {
-        map.let {
+        map.also {
             map.clear()
             it.clear()
 
@@ -248,14 +249,16 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
     }
 
     private fun showPlacesList(places: PlacesVO) {
-
         for(place in places.results) {
             placesList.add(place)
-            println("HGVJBH: " + placesList.count())
         }
 
-        rvPlaceList.adapter = ListPlacesAdapter(placesList) {
-
+        rvPlaceList.adapter = ListPlacesAdapter(placesList) { place ->
+            place.geometry?.let { geometry ->
+                val location = LatLng(geometry.location?.lat!!, geometry.location.lng!!)
+                val position = CameraUpdateFactory.newLatLngZoom(location, MAP_PLACE_ZOOM)
+                map.moveCamera(position)
+            }
         }
 
         if(!bottomSheetDialogPlaceDetails.isShowing) {

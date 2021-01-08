@@ -18,6 +18,10 @@ class ListPlacesAdapterViewHolder(
 
         placeName.text = place.name
         placeRating.text = place.rating
-        placeRatingStars.rating = place.rating?.toFloat()!!
+        placeRatingStars.rating = place.rating?.toFloat() ?: 0f
+
+        itemView.setOnClickListener {
+            callBack(place)
+        }
     }
 }

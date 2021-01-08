@@ -52,16 +52,17 @@ class ListPlacesPresenter(
     private fun fetchPlaces(location: String, type: String, key: String) {
         repository.fetchPlaces(location, PLACES_FIND_RADIUS, type, key)
                 .subscribeOn(Schedulers.io())
-                .doAfterTerminate { view?.hideLoading() }
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(object : SingleObserver<PlacesVO> {
                     override fun onSubscribe(d: Disposable) {
                         view?.showLoading()
                     }
                     override fun onSuccess(places: PlacesVO) {
+                        view?.hideLoading()
                         view?.showPlaces(places)
                     }
                     override fun onError(throwable: Throwable) {
+                        view?.hideLoading()
                         view?.showError(throwable)
                     }
                 })

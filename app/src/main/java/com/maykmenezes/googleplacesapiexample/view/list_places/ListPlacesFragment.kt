@@ -15,6 +15,8 @@ import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
+import android.view.View.GONE
+import android.view.View.VISIBLE
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.checkSelfPermission
@@ -68,8 +70,16 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
         configMap()
         requestGpsActivation()
+
+        iv_close.setOnClickListener {
+            requireActivity().finish()
+        }
+        bt_retry.setOnClickListener {
+            createLocationCallback()
+        }
     }
 
     private fun configMap() {
@@ -166,15 +176,18 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
             }
 
     override fun showLoading() {
-
+        mapView.visibility = GONE
+        cl_error.visibility = GONE
+        ll_loading.visibility = VISIBLE
     }
 
     override fun hideLoading() {
-
+        ll_loading.visibility = GONE
     }
 
     override fun showError(e: Throwable) {
-
+        mapView.visibility = GONE
+        cl_error.visibility = VISIBLE
     }
 
     private fun  bitmapDescriptorFromVector(context: Context, vectorResId:Int): BitmapDescriptor? {
@@ -190,6 +203,9 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
     }
 
     override fun showPlaces(places: PlacesVO) {
+
+        cl_error.visibility = GONE
+        mapView.visibility = VISIBLE
 
         showPlacesList(places)
 

@@ -270,6 +270,9 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
         }
 
         rvPlaceList.adapter = ListPlacesAdapter(placesList) { place ->
+
+            bottomSheetDialogPlaceDetails.dismiss()
+
             place.geometry?.let { geometry ->
                 val location = LatLng(geometry.location?.lat!!, geometry.location.lng!!)
                 val position = CameraUpdateFactory.newLatLngZoom(location, MAP_PLACE_ZOOM)
@@ -285,6 +288,12 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
     override fun onMapReady(googleMap: GoogleMap) {
         MapsInitializer.initialize(requireActivity())
         map = googleMap
+        map.setOnMarkerClickListener {
+            if (!bottomSheetDialogPlaceDetails.isShowing) {
+                bottomSheetDialogPlaceDetails.show()
+            }
+            true
+        }
     }
 
     private fun isGPSEnabled(): Boolean {

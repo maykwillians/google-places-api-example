@@ -4,7 +4,9 @@ import com.google.gson.annotations.SerializedName
 
 data class PlacesVO(
 		@field:SerializedName("results")
-		val results: List<ResultsItem>
+		val results: List<ResultsItem>,
+		@field:SerializedName("status")
+		val status: String
 )
 
 data class ResultsItem(

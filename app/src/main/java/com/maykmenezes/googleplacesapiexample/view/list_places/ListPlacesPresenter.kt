@@ -58,12 +58,17 @@ class ListPlacesPresenter(
                         view?.showLoading()
                     }
                     override fun onSuccess(places: PlacesVO) {
-                        view?.hideLoading()
-                        view?.showPlaces(places)
+                        if(places.status == "REQUEST_DENIED") {
+                            view?.hideLoading()
+                            view?.showError()
+                        } else {
+                            view?.hideLoading()
+                            view?.showPlaces(places)
+                        }
                     }
                     override fun onError(throwable: Throwable) {
                         view?.hideLoading()
-                        view?.showError(throwable)
+                        view?.showError()
                     }
                 })
     }

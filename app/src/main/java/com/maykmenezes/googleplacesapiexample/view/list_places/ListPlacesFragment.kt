@@ -188,7 +188,7 @@ class ListPlacesFragment : Fragment(), ListPlacesContract.View, OnMapReadyCallba
         ll_loading.visibility = GONE
     }
 
-    override fun showError(e: Throwable) {
+    override fun showError() {
         mapView.visibility = GONE
         cl_error.visibility = VISIBLE
     }
